@@ -1,0 +1,41 @@
+#!/bin/sh
+# Blocks commits that would leak private details into this PUBLIC repo.
+# 1. Refuses staged files named config.md or history.md.
+# 2. Refuses staged additions that match any line of the private blocklist.
+#    The blocklist lives outside the repo so its contents are never published:
+#    $CLAUDE_SKILLS_BLOCKLIST, default ~/.config/claude-skills/blocklist.txt
+# To bypass for a false positive, edit the blocklist, not this hook.
+
+fail=0
+
+bad_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '(^|/)(config|history)\.md$')
+if [ -n "$bad_files" ]; then
+  echo "pre-commit: private settings files must not be committed to the public repo:" >&2
+  echo "$bad_files" | sed 's/^/  /' >&2
+  fail=1
+fi
+
+blocklist="${CLAUDE_SKILLS_BLOCKLIST:-$HOME/.config/claude-skills/blocklist.txt}"
+if [ ! -f "$blocklist" ]; then
+  echo "pre-commit: blocklist not found at $blocklist; refusing to commit to the public repo." >&2
+  echo "  Create it (one regex per line) or set CLAUDE_SKILLS_BLOCKLIST." >&2
+  exit 1
+fi
+
+patterns=$(grep -v -E '^[[:space:]]*(#|$)' "$blocklist")
+if [ -n "$patterns" ]; then
+  added=$(git diff --cached -U0 --no-color --diff-filter=ACMR | grep -E '^\+' | grep -v -E '^\+\+\+ ')
+  names=$(git diff --cached --name-only --diff-filter=ACMR)
+  hits=$(printf '%s\n%s\n' "$added" "$names" | grep -n -i -E "$(echo "$patterns" | paste -sd'|' -)")
+  if [ -n "$hits" ]; then
+    echo "pre-commit: staged changes contain blocklisted (private) words:" >&2
+    echo "$hits" | cut -c1-160 | sed 's/^/  /' >&2
+    fail=1
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "pre-commit: commit blocked. Move private content to claude-skills-private." >&2
+  exit 1
+fi
+exit 0

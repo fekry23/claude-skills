@@ -1,0 +1,12 @@
+# Personal settings and run logs stay local
+**/config.md
+**/history.md
+
+# Personal documents
+*.pdf
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.heic
+receipts/
