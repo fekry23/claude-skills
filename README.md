@@ -14,6 +14,7 @@ A skill is a folder containing a `SKILL.md` file: step-by-step instructions, plu
 - [Writing a skill](#writing-a-skill)
 - [Troubleshooting](#troubleshooting)
 - [Maintainer notes](#maintainer-notes)
+- [License](#license)
 
 ## Skills
 
@@ -132,3 +133,7 @@ mkdir -p ~/.config/claude-skills && touch ~/.config/claude-skills/blocklist.txt 
 ```
 
 The hook refuses to commit if the blocklist file is missing, so it can't silently stop protecting you.
+
+## License
+
+[MIT](LICENSE): free to use, modify and share, with attribution.
